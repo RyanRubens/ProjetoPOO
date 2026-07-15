@@ -55,6 +55,28 @@ class Figura(ABC):
     @abstractmethod
     def mover(self, dx, dy):
         pass
+    @abstractmethod
+    def bbox(self):
+        """Retorna (x1, y1, x2, y2) do retângulo que envolve a figura,
+        com x1<=x2 e y1<=y2 (bounding box)."""
+        pass
+
+    def selecionado_por_retangulo(self, rx1, ry1, rx2, ry2, modo="contido"):
+        """Diz se a figura deve ser marcada como selecionada dado um retângulo
+        de seleção definido pelo arrasto do mouse (dois pontos quaisquer).
+
+        para estar "contido" a figura precisa estar totalmente dentro do retângulo
+        para estar "intersecta" -> basta a figura tocar o retângulo
+        """
+        rx1, rx2 = min(rx1, rx2), max(rx1, rx2)
+        ry1, ry2 = min(ry1, ry2), max(ry1, ry2)
+        bx1, by1, bx2, by2 = self.bbox()
+
+        if modo == "intersecta":
+            return not (bx2 < rx1 or bx1 > rx2 or by2 < ry1 or by1 > ry2)
+
+        # modo "contido" (padrão)
+        return rx1 <= bx1 and by1 >= ry1 and bx2 <= rx2 and by2 <= ry2
 
 
 class Linha(Figura):
@@ -81,6 +103,10 @@ class Linha(Figura):
         self.y1 += dy
         self.x2 += dx
         self.y2 += dy
+
+    def bbox(self):
+        return (min(self.x1, self.x2), min(self.y1, self.y2),
+                max(self.x1, self.x2), max(self.y1, self.y2))
 
 class Oval(Figura):
     def __init__(self, x1, y1, x2, y2, cor_cont, cor_pren):
@@ -113,6 +139,10 @@ class Oval(Figura):
         self.y1 += dy
         self.x2 += dx
         self.y2 += dy
+
+    def bbox(self):
+        return (min(self.x1, self.x2), min(self.y1, self.y2),
+                max(self.x1, self.x2), max(self.y1, self.y2))
 
 
 class Circulo(Oval):
@@ -170,6 +200,11 @@ class Rabisco(Figura):
     def mover(self, dx, dy):
         self.pontos = [(px + dx, py + dy) for px, py in self.pontos]
 
+    def bbox(self):
+        xs = [p[0] for p in self.pontos]
+        ys = [p[1] for p in self.pontos]
+        return (min(xs), min(ys), max(xs), max(ys))
+
 
 class Poligono(Figura):
     def __init__(self, x, y, cor_cont, cor_pren):
@@ -216,3 +251,8 @@ class Poligono(Figura):
 
     def mover(self, dx, dy):
         self.vertices = [(vx + dx, vy + dy) for vx, vy in self.vertices]
+
+    def bbox(self):
+        xs = [v[0] for v in self.vertices]
+        ys = [v[1] for v in self.vertices]
+        return (min(xs), min(ys), max(xs), max(ys))
