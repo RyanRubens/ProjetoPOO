@@ -1,5 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
+from ..modelo import FiguraComposta
 
 DESLOCAMENTO_COLAR = 15
 
@@ -67,6 +68,13 @@ class EstadoDesenho(ABC):
 
     def ao_mudar_cor(self, contexto):
         pass
+
+    def ao_agrupar(self, contexto):
+        pass
+
+    def ao_desagrupar(self, contexto):
+        pass
+
 
 class EstadoOcioso(EstadoDesenho):
 
@@ -188,6 +196,8 @@ class EstadoSelecaoAtiva(EstadoDesenho):
 
         _selecionar_com_modificador(contexto, figura, event)
         contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+        contexto.redesenhar_com_selecao()
+
         if contexto.figuras_selecionadas:
             contexto.mudar_estado(EstadoArrastandoSelecao())
         else:
@@ -257,7 +267,40 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         cor_cont = contexto.janela.obter_cor_contorno()
         cor_pren = contexto.janela.obter_cor_preenchimento()
         for figura in contexto.figuras_selecionadas:
-            figura.cor_cont = cor_cont
-            if figura.cor_pren is not None:  # Linha e Rabisco não têm preenchimento
-                figura.cor_pren = cor_pren
+            figura.mudar_cor(cor_cont, cor_pren)
         contexto.redesenhar_com_selecao()
+
+    def ao_agrupar(self, contexto):
+        """Ctrl+G: agrupa as figuras selecionadas em uma única FiguraComposta.
+        """
+        selecionadas = contexto.figuras_selecionadas
+        if len(selecionadas) < 2:
+            return
+
+        for figura in selecionadas:
+            contexto.desenho.remover_figura(figura)
+
+        composta = FiguraComposta(list(selecionadas))
+        contexto.desenho.adicionar_figura(composta)
+        contexto.figuras_selecionadas = [composta]
+        contexto.redesenhar_com_selecao()
+
+    def ao_desagrupar(self, contexto):
+        """Ctrl+Shift+G: desfaz a composição de qualquer FiguraComposta que
+        esteja selecionada."""
+        nova_selecao = []
+        desagrupou_alguma = False
+
+        for figura in contexto.figuras_selecionadas:
+            if isinstance(figura, FiguraComposta):
+                contexto.desenho.remover_figura(figura)
+                for filha in figura.figuras_compostas:
+                    contexto.desenho.adicionar_figura(filha)
+                    nova_selecao.append(filha)
+                desagrupou_alguma = True
+            else:
+                nova_selecao.append(figura)
+
+        if desagrupou_alguma:
+            contexto.figuras_selecionadas = nova_selecao
+            contexto.redesenhar_com_selecao()
