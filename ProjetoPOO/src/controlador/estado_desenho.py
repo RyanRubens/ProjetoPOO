@@ -3,6 +3,22 @@ from abc import ABC, abstractmethod
 
 DESLOCAMENTO_COLAR = 15
 
+CTRL = 0x0004
+
+
+def _selecionar_com_modificador(contexto, figura, event):
+    """Leva em conta o CTRL aticado, se estiver adciona a figura ás selecionadas,
+    se nçao roda como ao_pressionar normal (nçao muda pra estadoOcioso).
+    Caso já esteja selecionada remove"""
+    if event.state & CTRL:
+        if figura in contexto.figuras_selecionadas:
+            contexto.figuras_selecionadas.remove(figura)
+        else:
+            contexto.figuras_selecionadas.append(figura)
+    elif figura not in contexto.figuras_selecionadas:
+        contexto.figuras_selecionadas = [figura]
+
+
 class EstadoDesenho(ABC):
     """Interface do padrão State."""
 
@@ -62,10 +78,11 @@ class EstadoOcioso(EstadoDesenho):
             if figura is None:
                 return  # clique em área vazia: nada a selecionar, continua ocioso
 
-            contexto.figuras_selecionadas = [figura]
+            _selecionar_com_modificador(contexto, figura, event)
             contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
             contexto.redesenhar_com_selecao()
-            contexto.mudar_estado(EstadoArrastandoSelecao())
+            if contexto.figuras_selecionadas:
+                contexto.mudar_estado(EstadoArrastandoSelecao())
             return
 
         cor_cont = contexto.janela.obter_cor_contorno()
@@ -169,9 +186,12 @@ class EstadoSelecaoAtiva(EstadoDesenho):
             contexto.mudar_estado(EstadoOcioso())
             return
 
-        if figura not in contexto.figuras_selecionadas:
-            contexto.figuras_selecionadas = [figura]
-            contexto.redesenhar_com_selecao()
+        _selecionar_com_modificador(contexto, figura, event)
+        contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+        if contexto.figuras_selecionadas:
+            contexto.mudar_estado(EstadoArrastandoSelecao())
+        else:
+            contexto.mudar_estado(EstadoOcioso())
 
         contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
         contexto.mudar_estado(EstadoArrastandoSelecao())
