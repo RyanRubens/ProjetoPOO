@@ -1,3 +1,5 @@
+import copy
+
 class Desenho:
     """Modelo que mantém a lista de figuras já confirmadas no desenho.
 
@@ -9,12 +11,20 @@ class Desenho:
     def __init__(self):
         self._figuras = []
 
+    def obter_estado(self):
+        """Retorna uma cópia independente da lista de figuras (snapshot)."""
+        return copy.deepcopy(self._figuras)
+
+    def restaurar_estado(self, figuras):
+        """Substitui a lista de figuras por um snapshot salvo anteriormente."""
+        self._figuras = figuras
+
     def adicionar_figura(self, figura):
         """Adiciona a figura à coleção, ignorando figuras incompletas
         (ex.: uma linha sem comprimento ou um rabisco com um único ponto)."""
         if not figura.incompleto():
             self._figuras.append(figura)
-    
+
     def remover_figura(self, figura):
         if figura in self._figuras:
             self._figuras.remove(figura)
@@ -49,7 +59,7 @@ class Desenho:
         if figura in self._figuras:
             self._figuras.remove(figura)
             self._figuras.insert(0, figura)
-            
+
     def limpar(self):
         self._figuras = []
 

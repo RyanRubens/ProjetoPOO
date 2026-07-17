@@ -23,6 +23,8 @@ class ControladorDesenho:
         self.janela = janela
         self.figura_atual = None
         self.estado = EstadoOcioso()
+        self.pilha_desfazer = []
+        self.pilha_refazer = []
 
         self.figuras_selecionadas = []
         self.buffer_copia = []
@@ -37,6 +39,7 @@ class ControladorDesenho:
             ao_finalizar=self.ao_finalizar,
             ao_limpar=self.limpar_tela,
         )
+        
         self.janela.vincular_teclado(
             ao_apagar=self.ao_apagar,
             ao_mover_frente=self.ao_mover_frente,
@@ -45,8 +48,8 @@ class ControladorDesenho:
             ao_mover_fundo=self.ao_mover_fundo,
             ao_copiar=self.ao_copiar,
             ao_colar=self.ao_colar,
-            ao_agrupar=self.ao_agrupar,
-            ao_desagrupar=self.ao_desagrupar,
+            ao_desfazer=self.desfazer,
+            ao_refazer=self.refazer,
         )
         self.janela.vincular_mudanca_cor(self.ao_mudar_cor)
 
@@ -117,9 +120,35 @@ class ControladorDesenho:
         
     def confirmar_figura_atual(self):
         if self.figura_atual is not None:
+            self.salvar_estado()
             self.desenho.adicionar_figura(self.figura_atual)
             self.figura_atual = None
         self.janela.redesenhar(self.desenho.obter_figuras(), self.figuras_selecionadas)
+
+    def salvar_estado(self):
+        """Chamado ANTES de qualquer ação que modifique o desenho."""
+        self.pilha_desfazer.append(self.desenho.obter_estado())
+        self.pilha_refazer.clear()
+
+    def desfazer(self, event=None):
+        if not self.pilha_desfazer:
+            return
+        self.pilha_refazer.append(self.desenho.obter_estado())
+        estado_anterior = self.pilha_desfazer.pop()
+        self.desenho.restaurar_estado(estado_anterior)
+        self.figuras_selecionadas = []
+        self.mudar_estado(EstadoOcioso())
+        self.redesenhar_com_selecao()
+
+    def refazer(self, event=None):
+        if not self.pilha_refazer:
+            return
+        self.pilha_desfazer.append(self.desenho.obter_estado())
+        proximo_estado = self.pilha_refazer.pop()
+        self.desenho.restaurar_estado(proximo_estado)
+        self.figuras_selecionadas = []
+        self.mudar_estado(EstadoOcioso())
+        self.redesenhar_com_selecao()
 
     def limpar_tela(self):
         self.desenho.limpar()

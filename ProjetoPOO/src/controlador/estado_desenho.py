@@ -182,23 +182,23 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         tipo = contexto.janela.obter_tipo_figura()
 
         if tipo != 'Selecionar':
-            # Usuário trocou o tipo de figura no menu: encerra a seleção e
-            # deixa o EstadoOcioso tratar este mesmo clique como o início de
-            # uma nova figura, em vez de "gastar" o clique só desmarcando.
-            contexto.figuras_selecionadas = []
+            contexto.figuras_selecionadas = [figura]
+            contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+            contexto.salvar_estado()
             contexto.redesenhar_com_selecao()
-            contexto.mudar_estado(EstadoOcioso())
-            contexto.estado.ao_pressionar(contexto, event)
+            contexto.mudar_estado(EstadoArrastandoSelecao())
             return
+            
 
         figura = contexto.desenho.figura_no_ponto(event.x, event.y)
 
-        if figura is None:
-            contexto.figuras_selecionadas = []
+        if figura not in contexto.figuras_selecionadas:
+            contexto.figuras_selecionadas = [figura]
             contexto.redesenhar_com_selecao()
-            contexto.retangulo_inicio = (event.x, event.y)
-            contexto.mudar_estado(EstadoSelecionandoRetangulo())
-            return
+
+        contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+        contexto.salvar_estado()
+        contexto.mudar_estado(EstadoArrastandoSelecao())
 
         _selecionar_com_modificador(contexto, figura, event)
         contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
@@ -220,6 +220,7 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         pass
 
     def ao_apagar(self, contexto):
+        contexto.salvar_estado()
         for figura in contexto.figuras_selecionadas:
             contexto.desenho.remover_figura(figura)
         contexto.figuras_selecionadas = []
@@ -227,21 +228,25 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         contexto.redesenhar_com_selecao()
 
     def ao_mover_frente(self, contexto):
+        contexto.salvar_estado()
         for figura in contexto.figuras_selecionadas:
             contexto.desenho.mover_para_frente(figura)
         contexto.redesenhar_com_selecao()
 
     def ao_mover_tras(self, contexto):
+        contexto.salvar_estado()
         for figura in contexto.figuras_selecionadas:
             contexto.desenho.mover_para_tras(figura)
         contexto.redesenhar_com_selecao()
 
     def ao_mover_topo(self, contexto):
+        contexto.salvar_estado()
         for figura in contexto.figuras_selecionadas:
             contexto.desenho.mover_para_topo(figura)
         contexto.redesenhar_com_selecao()
 
     def ao_mover_fundo(self, contexto):
+        contexto.salvar_estado()
         for figura in contexto.figuras_selecionadas:
             contexto.desenho.mover_para_fundo(figura)
         contexto.redesenhar_com_selecao()
@@ -252,7 +257,7 @@ class EstadoSelecaoAtiva(EstadoDesenho):
     def ao_colar(self, contexto):
         if not contexto.buffer_copia:
             return
-
+        contexto.salvar_estado()
         novas = []
         for figura in contexto.buffer_copia:
             copia = copy.deepcopy(figura)
@@ -268,10 +273,13 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         contexto.redesenhar_com_selecao()
 
     def ao_mudar_cor(self, contexto):
+        contexto.salvar_estado()
         cor_cont = contexto.janela.obter_cor_contorno()
         cor_pren = contexto.janela.obter_cor_preenchimento()
         for figura in contexto.figuras_selecionadas:
-            figura.mudar_cor(cor_cont, cor_pren)
+            figura.cor_cont = cor_cont
+            if figura.cor_pren is not None:
+                figura.cor_pren = cor_pren
         contexto.redesenhar_com_selecao()
 
 
