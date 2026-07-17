@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 TOLERANCIA_CLIQUE = 6
 LARGURA_NORMAL = 1
 LARGURA_SELECIONADA = 3
+MIN_LADOS_POLIGONO_REGULAR = 3  #Evitar Poligonos de dois lado
+MAX_LADOS_POLIGONO_REGULAR = 20  #Evitar Poligonos infinitos (circulos)
 
 def _distancia_ponto_segmento(x1, y1, x2, y2, px, py):
     """Distância entre o segmento ((x1,y1), (x2,y2)) e o ponto (px, py)."""
@@ -61,6 +63,13 @@ class Figura(ABC):
         com x1<=x2 e y1<=y2 (bounding box)."""
         pass
 
+    def mudar_cor(self, cor_cont, cor_pren):
+        """Criada para evitar erros envolvendo figuras compostas"""
+        self.cor_cont = cor_cont
+        if self.cor_cont is not None:
+            self.cor_pren = cor_pren
+
+    
     def selecionado_por_retangulo(self, rx1, ry1, rx2, ry2, modo="contido"):
         """Diz se a figura deve ser marcada como selecionada dado um retângulo
         de seleção definido pelo arrasto do mouse (dois pontos quaisquer).
@@ -257,9 +266,41 @@ class Poligono(Figura):
         ys = [v[1] for v in self.vertices]
         return (min(xs), min(ys), max(xs), max(ys))
 
+      
+class FiguraComposta(Figura):
+    def __init__(self, figuras_compostas):
+        super().__init__(cor_cont=None, cor_pren=None)
+        self.figuras_compostas = figuras_compostas
 
-MIN_LADOS_POLIGONO_REGULAR = 3
-MAX_LADOS_POLIGONO_REGULAR = 20  # evita que "aumentar lados" vire um círculo infinito
+    def desenhar(self, canvas, tracejado=False, selecionado=False):
+        for figura in self.figuras_compostas:
+            figura.desenhar(canvas, tracejado=tracejado, selecionado=selecionado)
+
+    def incompleto(self):
+        return False #Não fica incompleta
+
+    def atualizar(self, x, y):
+        pass  #Não atualiza
+
+    def contem_ponto(self, x, y):
+        return any(figura.contem_ponto(x, y) for figura in self.figuras_compostas)
+
+    def mover(self, dx, dy):
+        for figura in self.figuras_compostas:
+            figura.mover(dx, dy)
+
+    def bbox(self):
+        caixas = [figura.bbox() for figura in self.figuras_compostas]
+        return (
+            min(caixa[0] for caixa in caixas),
+            min(caixa[1] for caixa in caixas),
+            max(caixa[2] for caixa in caixas),
+            max(caixa[3] for caixa in caixas),
+        )
+
+    def mudar_cor(self, cor_cont, cor_pren):
+        for figura in self.figuras_compostas:
+            figura.mudar_cor(cor_cont, cor_pren)
 
 
 class PoligonoRegular(Poligono):

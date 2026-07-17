@@ -90,7 +90,7 @@ class JanelaDesenho:
         self.botao_limpar.config(command=ao_limpar)
 
     def vincular_teclado(self, ao_apagar, ao_mover_frente, ao_mover_tras, ao_mover_topo, ao_mover_fundo,
-                          ao_copiar, ao_colar):
+                          ao_copiar, ao_colar, ao_agrupar, ao_desagrupar):
         """Liga as teclas que atuam sobre a(s) figura(s) selecionada(s)."""
         self.canvas.bind('<Delete>', ao_apagar)
         self.canvas.bind('<Right>', ao_mover_frente)
@@ -99,6 +99,8 @@ class JanelaDesenho:
         self.canvas.bind('<Down>', ao_mover_fundo)
         self.canvas.bind('<Control-c>', ao_copiar)
         self.canvas.bind('<Control-v>', ao_colar)
+        self.canvas.bind('<Control-g>', ao_agrupar)   #Ctrl+G
+        self.canvas.bind('<Control-G>', ao_desagrupar)   #Ctrl+Shift+G
 
     def vincular_mudanca_cor(self, ao_mudar_cor):
         """Chama ao_mudar_cor sempre que o usuário troca a cor de contorno ou

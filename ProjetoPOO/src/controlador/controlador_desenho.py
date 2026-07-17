@@ -44,6 +44,8 @@ class ControladorDesenho:
             ao_mover_fundo=self.ao_mover_fundo,
             ao_copiar=self.ao_copiar,
             ao_colar=self.ao_colar,
+            ao_agrupar=self.ao_agrupar,
+            ao_desagrupar=self.ao_desagrupar,
         )
         self.janela.vincular_mudanca_cor(self.ao_mudar_cor)
 
@@ -85,6 +87,11 @@ class ControladorDesenho:
     def ao_mudar_cor(self, *_args):
         self.estado.ao_mudar_cor(self)
 
+    def ao_agrupar(self, event=None):
+        self.estado.ao_agrupar(self)
+
+    def ao_desagrupar(self, event=None):
+        self.estado.ao_desagrupar(self)
 
     #___________________#
     def mudar_estado(self, novo_estado):

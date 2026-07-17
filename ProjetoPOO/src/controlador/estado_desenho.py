@@ -1,8 +1,25 @@
 import copy
 from abc import ABC, abstractmethod
+from ..modelo import FiguraComposta
 
 DESLOCAMENTO_COLAR = 15
 MASCARA_SHIFT = 0x0001  # bit de Shift em event.state (Tkinter)
+
+CTRL = 0x0004
+
+
+def _selecionar_com_modificador(contexto, figura, event):
+    """Leva em conta o CTRL aticado, se estiver adciona a figura ás selecionadas,
+    se nçao roda como ao_pressionar normal (nçao muda pra estadoOcioso).
+    Caso já esteja selecionada remove"""
+    if event.state & CTRL:
+        if figura in contexto.figuras_selecionadas:
+            contexto.figuras_selecionadas.remove(figura)
+        else:
+            contexto.figuras_selecionadas.append(figura)
+    elif figura not in contexto.figuras_selecionadas:
+        contexto.figuras_selecionadas = [figura]
+
 
 class EstadoDesenho(ABC):
     """Interface do padrão State."""
@@ -53,6 +70,13 @@ class EstadoDesenho(ABC):
     def ao_mudar_cor(self, contexto):
         pass
 
+    def ao_agrupar(self, contexto):
+        pass
+
+    def ao_desagrupar(self, contexto):
+        pass
+
+
 class EstadoOcioso(EstadoDesenho):
 
     def ao_pressionar(self, contexto, event):
@@ -63,10 +87,11 @@ class EstadoOcioso(EstadoDesenho):
             if figura is None:
                 return  # clique em área vazia: nada a selecionar, continua ocioso
 
-            contexto.figuras_selecionadas = [figura]
+            _selecionar_com_modificador(contexto, figura, event)
             contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
             contexto.redesenhar_com_selecao()
-            contexto.mudar_estado(EstadoArrastandoSelecao())
+            if contexto.figuras_selecionadas:
+                contexto.mudar_estado(EstadoArrastandoSelecao())
             return
 
         cor_cont = contexto.janela.obter_cor_contorno()
@@ -172,9 +197,14 @@ class EstadoSelecaoAtiva(EstadoDesenho):
             contexto.mudar_estado(EstadoOcioso())
             return
 
-        if figura not in contexto.figuras_selecionadas:
-            contexto.figuras_selecionadas = [figura]
-            contexto.redesenhar_com_selecao()
+        _selecionar_com_modificador(contexto, figura, event)
+        contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+        contexto.redesenhar_com_selecao()
+
+        if contexto.figuras_selecionadas:
+            contexto.mudar_estado(EstadoArrastandoSelecao())
+        else:
+            contexto.mudar_estado(EstadoOcioso())
 
         contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
         contexto.mudar_estado(EstadoArrastandoSelecao())
@@ -240,10 +270,44 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         cor_cont = contexto.janela.obter_cor_contorno()
         cor_pren = contexto.janela.obter_cor_preenchimento()
         for figura in contexto.figuras_selecionadas:
-            figura.cor_cont = cor_cont
-            if figura.cor_pren is not None:  # Linha e Rabisco não têm preenchimento
-                figura.cor_pren = cor_pren
+            figura.mudar_cor(cor_cont, cor_pren)
         contexto.redesenhar_com_selecao()
+
+
+    def ao_agrupar(self, contexto):
+        """Ctrl+G: agrupa as figuras selecionadas em uma única FiguraComposta.
+        """
+        selecionadas = contexto.figuras_selecionadas
+        if len(selecionadas) < 2:
+            return
+
+        for figura in selecionadas:
+            contexto.desenho.remover_figura(figura)
+
+        composta = FiguraComposta(list(selecionadas))
+        contexto.desenho.adicionar_figura(composta)
+        contexto.figuras_selecionadas = [composta]
+        contexto.redesenhar_com_selecao()
+
+    def ao_desagrupar(self, contexto):
+        """Ctrl+Shift+G: desfaz a composição de qualquer FiguraComposta que
+        esteja selecionada."""
+        nova_selecao = []
+        desagrupou_alguma = False
+
+        for figura in contexto.figuras_selecionadas:
+            if isinstance(figura, FiguraComposta):
+                contexto.desenho.remover_figura(figura)
+                for filha in figura.figuras_compostas:
+                    contexto.desenho.adicionar_figura(filha)
+                    nova_selecao.append(filha)
+                desagrupou_alguma = True
+            else:
+                nova_selecao.append(figura)
+
+        if desagrupou_alguma:
+            contexto.figuras_selecionadas = nova_selecao
+            contexto.redesenhar_com_selecao()
 
 
 class EstadoDesenhandoPoligonoRegular(EstadoDesenho):
@@ -270,3 +334,4 @@ class EstadoDesenhandoPoligonoRegular(EstadoDesenho):
     def ao_finalizar(self, contexto, event):
         contexto.confirmar_figura_atual()
         contexto.mudar_estado(EstadoOcioso())
+

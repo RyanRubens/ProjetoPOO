@@ -1,4 +1,4 @@
-from .figura import Figura, Linha, Oval, Circulo, Rabisco, Poligono, PoligonoRegular
+from .figura import Figura, Linha, Oval, Circulo, Rabisco, Poligono, FiguraComposta, PoligonoRegular
 from .desenho import Desenho
 
-__all__ = ["Figura", "Linha", "Oval", "Circulo", "Rabisco", "Poligono", "PoligonoRegular", "Desenho"]
+__all__ = ["Figura", "Linha", "Oval", "Circulo", "Rabisco", "Poligono", "FiguraComposta", "PoligonoRegular" "Desenho"]
