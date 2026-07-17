@@ -286,8 +286,8 @@ class FiguraComposta(Figura):
         for figura in self.figuras_compostas:
             figura.mover(dx, dy)
 
-    def obter_caixa(self):
-        caixas = [figura.obter_caixa() for figura in self.figuras_compostas]
+    def bbox(self):
+        caixas = [figura.bbox() for figura in self.figuras_compostas]
         return (
             min(caixa[0] for caixa in caixas),
             min(caixa[1] for caixa in caixas),
