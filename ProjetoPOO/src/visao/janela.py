@@ -89,10 +89,7 @@ class JanelaDesenho:
         self.canvas.bind('<ButtonPress-1>', ao_pressionar_com_foco)
         self.canvas.bind('<B1-Motion>', ao_mover)
         self.canvas.bind('<ButtonRelease-1>', ao_soltar)
-        self.canvas.bind('<ButtonPress-3>', ao_finalizar)
-        # Duplo clique esquerdo: usado para finalizar o PoligonoRegular (o botão
-        # direito continua finalizando o Poligono comum).
-        self.canvas.bind('<Double-Button-1>', ao_finalizar)
+        self.canvas.bind('<ButtonPress-3>', ao_finalizar)  #Botão direito finalizando o Poligono comum/regular.
         self.botao_limpar.config(command=ao_limpar)
 
     def vincular_teclado(self, ao_apagar, ao_mover_frente, ao_mover_tras, ao_mover_topo, ao_mover_fundo,
