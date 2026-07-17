@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 TOLERANCIA_CLIQUE = 6
 LARGURA_NORMAL = 1
 LARGURA_SELECIONADA = 3
+MIN_LADOS_POLIGONO_REGULAR = 3  #Evitar Poligonos de dois lado
+MAX_LADOS_POLIGONO_REGULAR = 20  #Evitar Poligonos infinitos (circulos)
 
 def _distancia_ponto_segmento(x1, y1, x2, y2, px, py):
     """Distância entre o segmento ((x1,y1), (x2,y2)) e o ponto (px, py)."""
@@ -264,6 +266,7 @@ class Poligono(Figura):
         ys = [v[1] for v in self.vertices]
         return (min(xs), min(ys), max(xs), max(ys))
 
+      
 class FiguraComposta(Figura):
     def __init__(self, figuras_compostas):
         super().__init__(cor_cont=None, cor_pren=None)
@@ -298,3 +301,44 @@ class FiguraComposta(Figura):
     def mudar_cor(self, cor_cont, cor_pren):
         for figura in self.figuras_compostas:
             figura.mudar_cor(cor_cont, cor_pren)
+
+
+class PoligonoRegular(Poligono):
+    """Polígono com todos os lados/ângulos iguais, inscrito num círculo de
+    centro (cx, cy) e raio `raio`. Começa como triângulo; o número de lados
+    é ajustado clique a clique pelo controlador (ver EstadoDesenhandoPoligonoRegular)."""
+
+    def __init__(self, cx, cy, raio, cor_cont, cor_pren, num_lados=MIN_LADOS_POLIGONO_REGULAR):
+        super().__init__(cx + raio, cy, cor_cont, cor_pren)
+        self.cx = cx
+        self.cy = cy
+        self.raio = raio
+        self.num_lados = num_lados
+        self._atualizar_vertices()
+
+    def _atualizar_vertices(self):
+        self.vertices = []
+        for i in range(self.num_lados):
+            angulo = 2 * math.pi * i / self.num_lados
+            x = self.cx + self.raio * math.cos(angulo)
+            y = self.cy + self.raio * math.sin(angulo)
+            self.vertices.append((x, y))
+
+    def atualizar(self, x, y):
+        """Chamado ao arrastar o mouse: ajusta o raio, mantendo o num_lados atual."""
+        self.raio = math.hypot(x - self.cx, y - self.cy)
+        self._atualizar_vertices()
+
+    def mudar_num_lados(self, variacao):
+        """Aumenta/diminui o número de lados (delta = +1 ou -1), respeitando os limites."""
+        novo = self.num_lados + variacao
+        self.num_lados = max(MIN_LADOS_POLIGONO_REGULAR, min(MAX_LADOS_POLIGONO_REGULAR, novo))
+        self._atualizar_vertices()
+
+    def incompleto(self):
+        return self.raio == 0 or self.num_lados < MIN_LADOS_POLIGONO_REGULAR
+
+    def mover(self, dx, dy):
+        super().mover(dx, dy)
+        self.cx += dx
+        self.cy += dy

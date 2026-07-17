@@ -26,7 +26,8 @@ class JanelaDesenho:
 
         self.tipo_figura_var = StringVar(self.root)
         self.option_menu = ttk.OptionMenu(
-            self.frame, self.tipo_figura_var, 'Linha', 'Linha', 'Rabisco', 'Circulo', 'Oval', 'Poligono', 'Selecionar'
+            self.frame, self.tipo_figura_var, 'Linha', 'Linha', 'Rabisco', 'Circulo', 'Oval', 'Poligono',
+            'PoligonoRegular', 'Selecionar'
         )
         self.option_menu.grid(column=0, row=0, sticky=N, **paddings)
 
@@ -83,6 +84,9 @@ class JanelaDesenho:
         self.canvas.bind('<B1-Motion>', ao_mover)
         self.canvas.bind('<ButtonRelease-1>', ao_soltar)
         self.canvas.bind('<ButtonPress-3>', ao_finalizar)
+        # Duplo clique esquerdo: usado para finalizar o PoligonoRegular (o botão
+        # direito continua finalizando o Poligono comum).
+        self.canvas.bind('<Double-Button-1>', ao_finalizar)
         self.botao_limpar.config(command=ao_limpar)
 
     def vincular_teclado(self, ao_apagar, ao_mover_frente, ao_mover_tras, ao_mover_topo, ao_mover_fundo,

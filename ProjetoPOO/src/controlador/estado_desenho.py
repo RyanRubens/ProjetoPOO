@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from ..modelo import FiguraComposta
 
 DESLOCAMENTO_COLAR = 15
+MASCARA_SHIFT = 0x0001  # bit de Shift em event.state (Tkinter)
 
 CTRL = 0x0004
 
@@ -103,6 +104,8 @@ class EstadoOcioso(EstadoDesenho):
         contexto.figura_atual = figura
         if tipo == 'Poligono':
             contexto.mudar_estado(EstadoDesenhandoPoligono())
+        elif tipo == 'PoligonoRegular':
+            contexto.mudar_estado(EstadoDesenhandoPoligonoRegular())
         else:
             contexto.mudar_estado(EstadoArrastando())
 
@@ -270,6 +273,7 @@ class EstadoSelecaoAtiva(EstadoDesenho):
             figura.mudar_cor(cor_cont, cor_pren)
         contexto.redesenhar_com_selecao()
 
+
     def ao_agrupar(self, contexto):
         """Ctrl+G: agrupa as figuras selecionadas em uma única FiguraComposta.
         """
@@ -304,3 +308,30 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         if desagrupou_alguma:
             contexto.figuras_selecionadas = nova_selecao
             contexto.redesenhar_com_selecao()
+
+
+class EstadoDesenhandoPoligonoRegular(EstadoDesenho):
+    """PoligonoRegular já foi criado (triângulo, raio 0) no clique inicial.
+    Enquanto este estado estiver ativo:
+      - mover o mouse (arrastando) ajusta o raio;
+      - cada novo clique esquerdo soma um lado (Shift: subtrai), mínimo 3 e máximo 20;
+      - duplo clique esquerdo finaliza
+    """
+
+    def ao_pressionar(self, contexto, event):
+        shift_pressionado = bool(event.state & MASCARA_SHIFT)
+        variacao = -1 if shift_pressionado else 1
+        contexto.figura_atual.mudar_num_lados(variacao)
+        contexto.redesenhar_com_temporaria()
+
+    def ao_mover(self, contexto, event):
+        contexto.figura_atual.atualizar(event.x, event.y)
+        contexto.redesenhar_com_temporaria()
+
+    def ao_soltar(self, contexto, event):
+        pass  # figura só é confirmada no duplo clique (ao_finalizar)
+
+    def ao_finalizar(self, contexto, event):
+        contexto.confirmar_figura_atual()
+        contexto.mudar_estado(EstadoOcioso())
+
