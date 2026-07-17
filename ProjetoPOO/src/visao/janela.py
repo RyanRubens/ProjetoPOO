@@ -73,6 +73,12 @@ class JanelaDesenho:
     def desenhar_temporaria(self, figura):
         """Desenha (tracejada) a figura que ainda está sendo criada pelo usuário."""
         figura.desenhar(self.canvas, tracejado=True)
+    
+    def desenhar_retangulo_selecao(self, x1, y1, x2, y2):
+        """feedback visual apenas -não faz parte do model. 
+        Deve ser chamado depois de `redesenhar`,
+        para ficar por cima das figuras."""
+        self.canvas.create_rectangle(x1, y1, x2, y2, outline='gray50', dash=(4, 2))
 
     # ---- Vinculação de eventos: quem faz o quê é decidido pelo controlador ----
     def vincular_eventos(self, ao_pressionar, ao_mover, ao_soltar, ao_finalizar, ao_limpar):

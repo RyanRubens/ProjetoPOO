@@ -28,6 +28,7 @@ class ControladorDesenho:
         self.buffer_copia = []
         self.ultimo_x = None
         self.ultimo_y =None
+        self.retangulo_inicio = None
 
         self.janela.vincular_eventos(
             ao_pressionar=self.ao_pressionar,
@@ -110,6 +111,10 @@ class ControladorDesenho:
     def redesenhar_com_selecao(self):
         self.janela.redesenhar(self.desenho.obter_figuras(), self.figuras_selecionadas)
 
+    def redesenhar_com_retangulo(self, x1, y1, x2, y2):
+        self.janela.redesenhar(self.desenho.obter_figuras(), self.figuras_selecionadas)
+        self.janela.desenhar_retangulo_selecao(x1, y1, x2, y2)
+        
     def confirmar_figura_atual(self):
         if self.figura_atual is not None:
             self.desenho.adicionar_figura(self.figura_atual)

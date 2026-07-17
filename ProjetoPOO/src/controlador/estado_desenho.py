@@ -99,6 +99,8 @@ class EstadoOcioso(EstadoDesenho):
 
         figura = contexto.criar_figura(tipo, event.x, event.y, cor_cont, cor_pren)
         if figura is None:
+            contexto.retangulo_inicio = (event.x, event.y)
+            contexto.mudar_estado(EstadoSelecionandoRetangulo())
             return
 
         contexto.figura_atual = figura
@@ -194,7 +196,8 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         if figura is None:
             contexto.figuras_selecionadas = []
             contexto.redesenhar_com_selecao()
-            contexto.mudar_estado(EstadoOcioso())
+            contexto.retangulo_inicio = (event.x, event.y)
+            contexto.mudar_estado(EstadoSelecionandoRetangulo())
             return
 
         _selecionar_com_modificador(contexto, figura, event)
@@ -206,8 +209,6 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         else:
             contexto.mudar_estado(EstadoOcioso())
 
-        contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
-        contexto.mudar_estado(EstadoArrastandoSelecao())
 
     def ao_mover(self, contexto, event):
         pass  # botão não está pressionado: nada a arrastar
@@ -335,3 +336,30 @@ class EstadoDesenhandoPoligonoRegular(EstadoDesenho):
         contexto.confirmar_figura_atual()
         contexto.mudar_estado(EstadoOcioso())
 
+class EstadoSelecionandoRetangulo(EstadoDesenho):
+    """O usuário clicou em área vazia (no modo 'Selecionar') e está
+    arrastando o mouse, desenhando um retângulo elástico.
+    """
+
+    def ao_pressionar(self, contexto, event):
+        pass  # já estamos arrastando a partir do clique que iniciou o retângulo
+
+    def ao_mover(self, contexto, event):
+        x0, y0 = contexto.retangulo_inicio
+        contexto.redesenhar_com_retangulo(x0, y0, event.x, event.y)
+
+    def ao_soltar(self, contexto, event):
+        x0, y0 = contexto.retangulo_inicio
+        contexto.figuras_selecionadas = [
+            figura for figura in contexto.desenho.obter_figuras()
+            if figura.selecionado_por_retangulo(x0, y0, event.x, event.y)
+        ]
+        contexto.retangulo_inicio = None
+        contexto.redesenhar_com_selecao()
+        if contexto.figuras_selecionadas:
+            contexto.mudar_estado(EstadoSelecaoAtiva())
+        else:
+            contexto.mudar_estado(EstadoOcioso())
+
+    def ao_finalizar(self, contexto, event):
+        pass
