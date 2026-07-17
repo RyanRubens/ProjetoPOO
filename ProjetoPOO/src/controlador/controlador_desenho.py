@@ -1,5 +1,5 @@
 from ..modelo import *
-from .estado_desenho import EstadoOcioso, EstadoDesenhandoPoligonoRegular
+from .estado_desenho import EstadoOcioso
 
 class ControladorDesenho:
     """Controlador: reage aos eventos de mouse vindos da view, cria/atualiza
