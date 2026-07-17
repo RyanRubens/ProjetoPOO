@@ -1,3 +1,0 @@
-# Explicação de ter que enviar um arquivo OO.Selecao.2
-
-Como havíamos explicado em sala de aula, eu e minha equipe tivemos dificuldade em realizar o commit no github, onde o código do repositório está desatualizado em comparação com o codigo da ultima tag enviada que seria a tag OO.Selecao.1. O commit dessa nova tag OOSelecao.2 seria na tentativa de corrigir essa problemática. Além disso, a tag de OO.State.1 não foi definida no github, apesar de ter sido commitada, não conseguimos corrigir esse problema, e o senhor disse que poderíamos apenas explica-lo a situação, mas pela ordem de atualizção do código acredito que seja possível ver as mudanças realizadas.
