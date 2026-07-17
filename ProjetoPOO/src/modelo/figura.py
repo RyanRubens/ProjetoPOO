@@ -330,7 +330,7 @@ class PoligonoRegular(Poligono):
         self._atualizar_vertices()
 
     def mudar_num_lados(self, variacao):
-        """Aumenta/diminui o número de lados (delta = +1 ou -1), respeitando os limites."""
+        """Aumenta/diminui o número de lados (variacao = +1 ou -1), respeitando os limites."""
         novo = self.num_lados + variacao
         self.num_lados = max(MIN_LADOS_POLIGONO_REGULAR, min(MAX_LADOS_POLIGONO_REGULAR, novo))
         self._atualizar_vertices()
