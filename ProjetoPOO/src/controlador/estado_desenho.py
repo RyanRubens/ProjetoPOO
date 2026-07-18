@@ -85,7 +85,9 @@ class EstadoOcioso(EstadoDesenho):
         if tipo == 'Selecionar':
             figura = contexto.desenho.figura_no_ponto(event.x, event.y)
             if figura is None:
-                return  # clique em área vazia: nada a selecionar, continua ocioso
+                contexto.retangulo_inicio = (event.x, event.y)
+                contexto.mudar_estado(EstadoSelecionandoRetangulo())
+                return  # clique em área vazia: nada a selecionar, entra no EstadoSelecionandoRetangulo
 
             _selecionar_com_modificador(contexto, figura, event)
             contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
@@ -98,10 +100,7 @@ class EstadoOcioso(EstadoDesenho):
         cor_pren = contexto.janela.obter_cor_preenchimento()
 
         figura = contexto.criar_figura(tipo, event.x, event.y, cor_cont, cor_pren)
-        if figura is None:
-            contexto.retangulo_inicio = (event.x, event.y)
-            contexto.mudar_estado(EstadoSelecionandoRetangulo())
-            return
+    
 
         contexto.figura_atual = figura
         if tipo == 'Poligono':
