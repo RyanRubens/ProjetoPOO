@@ -181,26 +181,25 @@ class EstadoSelecaoAtiva(EstadoDesenho):
         tipo = contexto.janela.obter_tipo_figura()
 
         if tipo != 'Selecionar':
-            contexto.figuras_selecionadas = [figura]
-            contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
-            contexto.salvar_estado()
-            contexto.redesenhar_com_selecao()
-            contexto.mudar_estado(EstadoArrastandoSelecao())
+            # Trocou de ferramenta com uma seleção ativa: abandona a seleção
+            # e começa a desenhar a nova figura, exatamente como faria a
+            # partir do EstadoOcioso.
+            contexto.figuras_selecionadas = []
+            contexto.mudar_estado(EstadoOcioso())
+            contexto.estado.ao_pressionar(contexto, event)
             return
-            
 
         figura = contexto.desenho.figura_no_ponto(event.x, event.y)
 
-        if figura not in contexto.figuras_selecionadas:
-            contexto.figuras_selecionadas = [figura]
+        if figura is None:
+            contexto.figuras_selecionadas = []
+            contexto.mudar_estado(EstadoOcioso())
             contexto.redesenhar_com_selecao()
-
-        contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
-        contexto.salvar_estado()
-        contexto.mudar_estado(EstadoArrastandoSelecao())
+            return
 
         _selecionar_com_modificador(contexto, figura, event)
         contexto.ultimo_x, contexto.ultimo_y = event.x, event.y
+        contexto.salvar_estado()
         contexto.redesenhar_com_selecao()
 
         if contexto.figuras_selecionadas:
@@ -228,13 +227,27 @@ class EstadoSelecaoAtiva(EstadoDesenho):
 
     def ao_mover_frente(self, contexto):
         contexto.salvar_estado()
-        for figura in contexto.figuras_selecionadas:
+        # Processa da figura mais "alta" (maior índice) para a mais "baixa":
+        # assim cada uma abre espaço subindo por cima de uma figura NÃO
+        # selecionada, em vez de trocar de lugar com outra selecionada
+        # vizinha (o que fazia a operação parecer não ter efeito nenhum).
+        pilha = contexto.desenho.obter_figuras()
+        selecionadas_em_ordem = sorted(
+            contexto.figuras_selecionadas, key=pilha.index, reverse=True
+        )
+        for figura in selecionadas_em_ordem:
             contexto.desenho.mover_para_frente(figura)
         contexto.redesenhar_com_selecao()
 
     def ao_mover_tras(self, contexto):
         contexto.salvar_estado()
-        for figura in contexto.figuras_selecionadas:
+        # Mesmo raciocínio do mover_frente, mas na ordem inversa: a figura
+        # mais "baixa" desce primeiro, abrindo espaço para as demais.
+        pilha = contexto.desenho.obter_figuras()
+        selecionadas_em_ordem = sorted(
+            contexto.figuras_selecionadas, key=pilha.index
+        )
+        for figura in selecionadas_em_ordem:
             contexto.desenho.mover_para_tras(figura)
         contexto.redesenhar_com_selecao()
 

@@ -15,7 +15,7 @@ class ControladorDesenho:
         'Circulo': lambda x, y, cor_cont, cor_pren: Circulo(x, y, 0, cor_cont, cor_pren),
         'Rabisco': lambda x, y, cor_cont, cor_pren: Rabisco(x, y, cor_cont),
         'Poligono': lambda x, y, cor_cont, cor_pren: Poligono(x, y, cor_cont, cor_pren),
-        'PoligonoRegular': lambda x, y, cor_cont, cor_pren: PoligonoRegular(x, y, 0, cor_cont, cor_pren),
+        'PoligonoRegular': lambda x, y, cor_cont, cor_pren: PoligonoRegular(x, y, x, y, cor_cont, cor_pren),
     }
 
     def __init__(self, desenho, janela):

@@ -267,6 +267,52 @@ class Poligono(Figura):
         return (min(xs), min(ys), max(xs), max(ys))
 
       
+class PoligonoRegular(Poligono):
+    """Polígono com todos os lados/ângulos iguais, inscrito num círculo de
+    centro (cx, cy). Começa como triângulo; o número de lados
+    é aumentado com botão esquero e diminuido com ctrl + botão esquerdo (min é 3 e max é 20)."""
+
+    def __init__(self, cx, cy, mx, my, cor_cont, cor_pren, num_lados=MIN_LADOS_POLIGONO_REGULAR):
+        super().__init__(mx, my, cor_cont, cor_pren)
+        self.cx = cx
+        self.cy = cy
+        self.raio = 0
+        self.num_lados = num_lados
+        self.angulo_base = 0  # ângulo (rad) do vértice 0 em relação ao centro
+        self.atualizar(mx, my)  # calcula raio e ângulo a partir da posição do mouse
+
+    def _atualizar_vertices(self):
+        self.vertices = []
+        for i in range(self.num_lados):
+            angulo = self.angulo_base + 2 * math.pi * i / self.num_lados
+            x = self.cx + self.raio * math.cos(angulo)
+            y = self.cy + self.raio * math.sin(angulo)
+            self.vertices.append((x, y))
+
+    def atualizar(self, mx, my):
+        """Chamado ao mover o mouse: o vetor (centro -> mouse) define tanto
+        o raio (distância) quanto a rotação (ângulo) do polígono."""
+        dx = mx - self.cx
+        dy = my - self.cy
+        self.raio = math.hypot(dx, dy)
+        self.angulo_base = math.atan2(dy, dx)
+        self._atualizar_vertices()
+
+    def mudar_num_lados(self, variacao):
+        """Aumenta/diminui o número de lados (variacao = +1 ou -1), respeitando os limites."""
+        novo = self.num_lados + variacao
+        self.num_lados = max(MIN_LADOS_POLIGONO_REGULAR, min(MAX_LADOS_POLIGONO_REGULAR, novo))
+        self._atualizar_vertices()
+
+    def incompleto(self):
+        return self.raio == 0 or self.num_lados < MIN_LADOS_POLIGONO_REGULAR
+
+    def mover(self, dx, dy):
+        super().mover(dx, dy)
+        self.cx += dx
+        self.cy += dy
+
+
 class FiguraComposta(Figura):
     def __init__(self, figuras_compostas):
         super().__init__(cor_cont=None, cor_pren=None)
@@ -301,44 +347,3 @@ class FiguraComposta(Figura):
     def mudar_cor(self, cor_cont, cor_pren):
         for figura in self.figuras_compostas:
             figura.mudar_cor(cor_cont, cor_pren)
-
-
-class PoligonoRegular(Poligono):
-    """Polígono com todos os lados/ângulos iguais, inscrito num círculo de
-    centro (cx, cy) e raio `raio`. Começa como triângulo; o número de lados
-    é ajustado clique a clique pelo controlador (ver EstadoDesenhandoPoligonoRegular)."""
-
-    def __init__(self, cx, cy, raio, cor_cont, cor_pren, num_lados=MIN_LADOS_POLIGONO_REGULAR):
-        super().__init__(cx + raio, cy, cor_cont, cor_pren)
-        self.cx = cx
-        self.cy = cy
-        self.raio = raio
-        self.num_lados = num_lados
-        self._atualizar_vertices()
-
-    def _atualizar_vertices(self):
-        self.vertices = []
-        for i in range(self.num_lados):
-            angulo = 2 * math.pi * i / self.num_lados
-            x = self.cx + self.raio * math.cos(angulo)
-            y = self.cy + self.raio * math.sin(angulo)
-            self.vertices.append((x, y))
-
-    def atualizar(self, x, y):
-        """Chamado ao arrastar o mouse: ajusta o raio, mantendo o num_lados atual."""
-        self.raio = math.hypot(x - self.cx, y - self.cy)
-        self._atualizar_vertices()
-
-    def mudar_num_lados(self, variacao):
-        """Aumenta/diminui o número de lados (variacao = +1 ou -1), respeitando os limites."""
-        novo = self.num_lados + variacao
-        self.num_lados = max(MIN_LADOS_POLIGONO_REGULAR, min(MAX_LADOS_POLIGONO_REGULAR, novo))
-        self._atualizar_vertices()
-
-    def incompleto(self):
-        return self.raio == 0 or self.num_lados < MIN_LADOS_POLIGONO_REGULAR
-
-    def mover(self, dx, dy):
-        super().mover(dx, dy)
-        self.cx += dx
-        self.cy += dy
